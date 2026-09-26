@@ -75,3 +75,7 @@ install.sh: was applying Great Vibes as global KDE UI font on every re-install. 
 ## 2026-09-26 13:03:00 · fix
 
 paru cache was wiped (~/.cache/paru/clone emptied, 6 repos incl. electron tarball + shallow chromium mirror). Re-cloned AUR electron34 and re-created the 1.3GB shallow chromium mirror (tag 132.0.6834.210, depth 1, refspec pinned to the single tag) so makepkg never full-clones again
+
+## 2026-09-26 13:03:00 · note
+
+git identity was only set in nyan-gfsf-alert; zen-hardening/hermes-blood/buildlog could not be committed at all. Set global user.name/user.email to Living_Sin <intricos777-dot@users.noreply.github.com>. buildlog auto-commit works now
