@@ -18,6 +18,11 @@
 
 set -uo pipefail
 
+# Per-fetch ceiling. A handful of these repos are large or slow; without a cap
+# one of them stalls the whole seed. Anything that trips this is left for
+# makepkg rather than retried forever.
+FETCH_TIMEOUT="${SEED_FETCH_TIMEOUT:-90}"
+
 PKGDIR="${1:?usage: seed-vcs-sources.sh <pkgbuild-dir>}"
 PKGBUILD="$PKGDIR/PKGBUILD"
 [ -f "$PKGBUILD" ] || { echo "no PKGBUILD at $PKGBUILD" >&2; exit 1; }
@@ -50,10 +55,18 @@ seed_one() {
 
     if [ -n "$ref" ]; then
         git -C "$dest" config remote.origin.fetch "+${ref}:${ref}"
-        if git -C "$dest" fetch --depth 1 --no-tags origin "${ref}:${ref}" >/dev/null 2>&1; then
+        if timeout "$FETCH_TIMEOUT" git -C "$dest" fetch --depth 1 --no-tags origin "${ref}:${ref}" >/dev/null 2>&1; then
             echo "  ok     $name ($frag)"
             return 0
         fi
+        # A tag/branch pin that will not fetch shallowly is a hard stop. Do
+        # NOT fall through to the default branch: for nodejs/node that means
+        # pulling ~330k objects of history to satisfy a v20.19.1 pin that a
+        # full clone would have resolved anyway. Leave it absent and let
+        # makepkg do the one clone it cannot avoid.
+        echo "  DEFER  $name ($frag not fetchable shallowly; makepkg will clone)"
+        rm -rf "$dest"
+        return 1
     fi
 
     # commit= pin: most hosts refuse a bare-SHA fetch unless we ask for the
@@ -61,18 +74,19 @@ seed_one() {
     # then fall back to the default branch at depth 1 and search the history.
     if [ "${frag#commit=}" != "$frag" ]; then
         local sha="${frag#commit=}"
-        if git -C "$dest" fetch --depth 1 --no-tags origin "$sha" >/dev/null 2>&1; then
+        if timeout "$FETCH_TIMEOUT" git -C "$dest" fetch --depth 1 --no-tags origin "$sha" >/dev/null 2>&1; then
             git -C "$dest" config remote.origin.fetch "+refs/heads/*:refs/heads/*"
             echo "  ok     $name (direct sha)"
             return 0
         fi
     fi
 
-    # Last resort: shallow default branch. makepkg will fetch the rest.
+    # Last resort: shallow default branch at depth 1 (not 50). makepkg will
+    # deepen as needed; a deep pre-seed is what made this script slow.
     rm -rf "$dest"
     git init --bare --quiet "$dest" 2>/dev/null
     git -C "$dest" remote add origin "$url" 2>/dev/null
-    if git -C "$dest" fetch --depth 50 --no-tags origin '+refs/heads/*:refs/heads/*' >/dev/null 2>&1; then
+    if timeout "$FETCH_TIMEOUT" git -C "$dest" fetch --depth 1 --no-tags origin '+refs/heads/*:refs/heads/*' >/dev/null 2>&1; then
         echo "  warn   $name (shallow branch, pin may need a fetch)"
         return 0
     fi
