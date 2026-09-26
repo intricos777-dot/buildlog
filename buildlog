@@ -1,0 +1,113 @@
+#!/bin/bash
+# buildlog — durable build/audit journal for crash recovery
+# Appends timestamped entries to a git repo so session context survives a rebuild.
+
+set -e
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+LOG_DIR="${BUILDLOG_DIR:-$SCRIPT_DIR/logs}"
+ENTRY_FILE="$LOG_DIR/buildlog.md"
+STATE_FILE="$LOG_DIR/.state"
+
+mkdir -p "$LOG_DIR"
+
+cmd="${1:-help}"
+shift || true
+
+timestamp() { date '+%Y-%m-%d %H:%M:%S'; }
+
+ensure_header() {
+    if [ ! -f "$ENTRY_FILE" ]; then
+        cat > "$ENTRY_FILE" << 'EOF'
+# Build Log
+
+Durable journal of builds, audits, and fixes. Survives system rebuilds.
+
+Format: one `## <timestamp> · <category>` section per entry.
+EOF
+    fi
+}
+
+record() {
+    category="$1"; shift
+    message="$*"
+    ensure_header
+    printf '\n## %s · %s\n\n%s\n' "$(timestamp)" "$category" "$message" >> "$ENTRY_FILE"
+    if [ -d "$SCRIPT_DIR/.git" ]; then
+        git -C "$SCRIPT_DIR" add -A >/dev/null 2>&1 || true
+        git -C "$SCRIPT_DIR" commit -q -m "$category: $message" >/dev/null 2>&1 || true
+    fi
+    printf '  [✓] logged: %s\n' "$message"
+}
+
+case "$cmd" in
+    build)
+        record "build" "started: ${*:-unnamed}"
+        ;;
+    ok)
+        record "ok" "${*:-completed}"
+        ;;
+    fail)
+        record "FAIL" "${*:-unknown failure}"
+        ;;
+    fix)
+        record "fix" "${*:-no detail}"
+        ;;
+    note)
+        record "note" "${*:-no detail}"
+        ;;
+    env)
+        {
+            echo "## $(timestamp) · env"
+            echo
+            echo '```'
+            echo "os        : $(. /etc/os-release 2>/dev/null && echo "$PRETTY_NAME")"
+            echo "kernel    : $(uname -r)"
+            echo "node      : $(node --version 2>/dev/null || echo n/a)"
+            echo "python    : $(python3 --version 2>/dev/null || echo n/a)"
+            echo "opencode  : $(pacman -Q opencode-bin 2>/dev/null | awk '{print $2}' || echo n/a)"
+            echo "hermes    : $(pacman -Q hermes-agent 2>/dev/null | awk '{print $2}' || echo 'not installed')"
+            echo '```'
+        } >> "$ENTRY_FILE"
+        if [ -d "$SCRIPT_DIR/.git" ]; then
+            git -C "$SCRIPT_DIR" add -A >/dev/null 2>&1 || true
+            git -C "$SCRIPT_DIR" commit -q -m "env snapshot" >/dev/null 2>&1 || true
+        fi
+        printf '  [✓] env snapshot recorded\n'
+        ;;
+    tail)
+        [ -f "$ENTRY_FILE" ] && tail -n "${1:-40}" "$ENTRY_FILE" || echo "  (no log yet)"
+        ;;
+    push)
+        if [ -d "$SCRIPT_DIR/.git" ] && git -C "$SCRIPT_DIR" remote | grep -q .; then
+            git -C "$SCRIPT_DIR" push -q origin HEAD && printf '  [✓] pushed\n'
+        else
+            printf '  (no remote configured — log is local-only)\n'
+        fi
+        ;;
+    status)
+        if [ -f "$ENTRY_FILE" ]; then
+            entries=$(grep -c '^## ' "$ENTRY_FILE" || echo 0)
+            printf '  entries : %s\n' "$entries"
+            printf '  last    : %s\n' "$(grep '^## ' "$ENTRY_FILE" | tail -1)"
+            printf '  unsynced: %s\n' "$(git -C "$SCRIPT_DIR" status --porcelain 2>/dev/null | wc -l) change(s)"
+        else
+            printf '  (no log yet — run: buildlog note "first entry")\n'
+        fi
+        ;;
+    *)
+        cat << 'EOF'
+buildlog — durable build journal
+
+  buildlog build <desc>    log a build start
+  buildlog ok <desc>       log success
+  buildlog fail <desc>     log failure
+  buildlog fix <desc>      log a bug fix
+  buildlog note <desc>     log anything else
+  buildlog env             snapshot toolchain versions
+  buildlog tail [n]        show last n lines
+  buildlog push            push to git remote
+  buildlog status          entry count + last entry
+EOF
+        ;;
+esac
