@@ -103,21 +103,32 @@ fi
 
 echo
 echo "== DEPS repos =="
-# shellcheck disable=SC2013
-sed -n '/^source=(/,/^)/p' "$PKGBUILD" \
-  | grep -oE '[A-Za-z0-9_.-]+::git\+https?://[^#]+' \
-  | while IFS= read -r entry; do
-        name="${entry%%::*}"
-        rest="${entry#*::git+}"
-        url="${rest%%#*}"
-        frag=""
-        case "$rest" in
-            *"#"*) frag="${rest#*#}" ;;
-        esac
-        url="${url%.git}"
-        [ "$name" = "chromium-mirror" ] && continue
-        seed_one "$name" "$url" "$frag"
-    done
+# Parse in bash, not grep. Several source names contain '+' (libc++_src,
+# libc++abi_src), which a [A-Za-z0-9_.-] character class silently truncates --
+# that split them into bogus names like "_src" and left every fragment empty.
+# Take each whitespace-delimited token whole and split it ourselves.
+for entry in $(sed -n '/^source=(/,/^)/p' "$PKGBUILD" \
+                | tr ' \t' '\n\n' | grep '::git+'); do
+    entry="${entry%\"}"; entry="${entry#\"}"
+    [ -z "$entry" ] && continue
+    case "$entry" in
+        *"::git+"*) ;;
+        *) continue ;;
+    esac
+
+    name="${entry%%::*}"
+    rest="${entry#*::git+}"
+    url="${rest%%#*}"
+    frag=""
+    case "$rest" in
+        *"#"*) frag="${rest#*#}" ;;
+    esac
+    frag="${frag%\"}"; frag="${frag#\"}"
+    url="${url%.git}"
+
+    [ "$name" = "chromium-mirror" ] && continue
+    seed_one "$name" "$url" "$frag"
+done
 
 echo
 echo "done. verify with: du -sh $PKGDIR"
