@@ -103,3 +103,7 @@ pam_faillock facts confirmed from local man pages: (1) unlock_time=0 means NEVER
 ## 2026-09-26 13:50:14 · note
 
 1-day fail2ban lockout was ALREADY live: bantime=86400 on sshd + recidive jails in /etc/fail2ban/jail.d/shield-kitty.conf, matches repo. firewalld is now active with the workstation zone, so firewallcmd-rich-rules bans ARE enforceable. Fixed stale docs in unban-self.sh + fail2ban-coverage.md that wrongly claimed bantime=-1 permanent (89506fc)
+
+## 2026-09-26 13:50:14 · note
+
+SYSTEM SPOOFING IS ENTIRELY UNCOVERED: no arpwatch, no suricata, no zeek, no tcpdump, no tpm2-tools installed, and zero spoofing logic in any repo. fail2ban structurally CANNOT do this -- it parses auth logs for repeated failures and has no notion of ARP/DHCP/hostname/MAC spoofing or rogue-device impersonation. This needs different tooling, and installing it needs root
