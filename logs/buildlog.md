@@ -131,3 +131,7 @@ arpwatch installer aborted under sudo: 'hook not executable: /root/Projects/...'
 ## 2026-09-26 14:15:15 · fix
 
 arpwatch-spoof.service exited 1 in a restart loop: I used original-LBL-arpwatch flags, but the extra-repo 3.9 build has NO -a exec hook, no -u, no -c, and wants -i INTERFACE not positional. Rewrote detection to poll the datafile via arpwatch-spoof-scan.sh on a 2min timer, unit now uses -F -i wlo1 -f arp.dat -s -q -N -z (-N matters, this is a /8 so most traffic looks like a bogon). Found+fixed 3 bugs: comma-based MAC counting false-alarmed on same MAC with different case; stale state file swallowed a returning spoof; installer/scanner/unit disagreed on the datafile name. 12/12 tests pass incl. dedup lifecycle and 5000-row scale. commit 7dc7a07
+
+## 2026-09-26 14:17:54 · fix
+
+arpwatch-spoof STILL failed after the 3.9 rewrite: the culprit was -q. arpwatch(8) lists -q in the synopsis [-CdFNpqsvzZ] and describes it in OPTIONS, but the 3.9 binary rejects it and prints usage, exit 1. Tested every synopsis letter: -C -d -F -N -p -s -v -z -Z all accepted, -q is the sole exception, so the man page is wrong. arpwatch prints usage BEFORE opening the raw socket, so bad flags are detectable unprivileged -- added a parse-check to the installer reading ARPWATCH_ARGS shared with the unit, so it cannot drift again. commit fc71393
