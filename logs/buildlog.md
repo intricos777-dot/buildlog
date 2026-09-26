@@ -87,3 +87,7 @@ BDE hardlock was NOT installed, deliberately. Audit found install-hardlock.sh ap
 ## 2026-09-26 13:36:03 · ok
 
 notifications already in place: shield-kitty-watch.service enabled+active, notify-send, no fullscreen takeover
+
+## 2026-09-26 13:45:33 · fix
+
+faillock admin exemption PREPARED, NOT deployed (needs sudo). deploy-faillock-admin.sh orders it safely: backup -> create shield-admin -> enrol livings -> READ GROUP DB BACK -> only then install config naming admin_group, then write enroll.lock. Aborts if livings is not verifiably a member, because pam_faillock would otherwise lock the admin out like everyone else. Run: sudo ~/Projects/zen-hardening/deploy-faillock-admin.sh --check | deploy | --revert
