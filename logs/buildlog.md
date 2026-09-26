@@ -123,3 +123,7 @@ built ARP spoof detection (arpwatch 3.9-1 from extra, was entirely absent): arpw
 ## 2026-09-26 13:59:40 · fix
 
 corrected an earlier claim of mine: kdeconnectd is NOT LAN-exposed. systemctl says inactive/not-found because it is a KDE session autostart app (app-org.kde.kdeconnect.daemon@autostart.service), and the workstation zone bound to wlo1 returns no for 1716/tcp, 1716/udp and 5353/udp -- firewalld drops it. No jail needed and none is possible (the daemon writes no journal entries, so a jail would match nothing, same as the inert sshd jail)
+
+## 2026-09-26 14:02:04 · fix
+
+arpwatch installer aborted under sudo: 'hook not executable: /root/Projects/...'. sudo resets HOME to /root, so $HOME/Projects resolved into /root. Fixed by resolving the real home from SUDO_USER via getent and rewriting the unit path + Environment=HOME at install time. Also found a SECOND silent bug the same way: the hook is arpwatch's child, and arpwatch starts as root then drops privs with -u, which changes uid but NOT the environment -- so the hook had no DISPLAY/DBUS and every spoof notification failed while the log line still appeared. Fixed by reconstructing the session from /run/user/UID/bus. Verified: notify-send with only the bootstrapped vars exits 0, bare env fails 'Cannot autolaunch D-Bus'. commit b39490a
