@@ -119,3 +119,7 @@ repo updated to match live: shield-kitty-fail2ban.local recidive enabled=true (c
 ## 2026-09-26 13:59:40 · ok
 
 built ARP spoof detection (arpwatch 3.9-1 from extra, was entirely absent): arpwatch-spoof-alert.sh exec hook + arpwatch-spoof.service + install-arpwatch-spoof.sh, commit 3a65f5e. Alerts ONLY on flip-flop (one IP, two MACs); new hosts logged not alerted. NO auto-ban by design -- MAC randomisation makes flip-flops routine on a /8 with 16.7M other addresses, so a 24h ban would cut off colleagues; the 1-day ban stays with fail2ban where it keys on real auth attempts. 7/7 classification tests pass + live notify-send delivery verified. NOT INSTALLED, needs root
+
+## 2026-09-26 13:59:40 · fix
+
+corrected an earlier claim of mine: kdeconnectd is NOT LAN-exposed. systemctl says inactive/not-found because it is a KDE session autostart app (app-org.kde.kdeconnect.daemon@autostart.service), and the workstation zone bound to wlo1 returns no for 1716/tcp, 1716/udp and 5353/udp -- firewalld drops it. No jail needed and none is possible (the daemon writes no journal entries, so a jail would match nothing, same as the inert sshd jail)
