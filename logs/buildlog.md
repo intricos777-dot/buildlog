@@ -99,3 +99,7 @@ faillock: fixed 'audit = silent' (audit/silent are BARE FLAGS not key=value) and
 ## 2026-09-26 13:45:41 · note
 
 pam_faillock facts confirmed from local man pages: (1) unlock_time=0 means NEVER - needs 'faillock --user X --reset' as root, and man page warns it is an easy DoS target; (2) default dir /var/run/faillock is tmpfs so tallies AND any permanent lock vanish on reboot - real permanence needs dir= off tmpfs; (3) admin_group members are handled like root, so setting even_deny_root would defeat the exemption entirely. Live /etc/security/faillock.conf had NO admin_group, so livings was lockable; recover with 'sudo faillock --user livings --reset'
+
+## 2026-09-26 13:50:14 · note
+
+1-day fail2ban lockout was ALREADY live: bantime=86400 on sshd + recidive jails in /etc/fail2ban/jail.d/shield-kitty.conf, matches repo. firewalld is now active with the workstation zone, so firewallcmd-rich-rules bans ARE enforceable. Fixed stale docs in unban-self.sh + fail2ban-coverage.md that wrongly claimed bantime=-1 permanent (89506fc)
