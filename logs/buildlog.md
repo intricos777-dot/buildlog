@@ -111,3 +111,7 @@ SYSTEM SPOOFING IS ENTIRELY UNCOVERED: no arpwatch, no suricata, no zeek, no tcp
 ## 2026-09-26 13:50:18 · note
 
 THREE REAL GAPS found auditing 'ban remote access for 1 day': (1) ignoreip includes 10.0.0.0/8 and this machine IS 10.197.250.246/8, so 16,777,216 addresses on the local network are permanently EXEMPT from banning -- fail2ban cannot ban 'another system' on this network at all. (2) sshd jail is INERT: sshd inactive, nothing listens on 22. (3) kdeconnectd is LAN-exposed on *:1716 tcp+udp with NO jail -- the only real remote surface, unmonitored
+
+## 2026-09-26 13:53:39 · note
+
+repo updated to match live: shield-kitty-fail2ban.local recidive enabled=true (c897508), confirmed deliberate by user, not drift. Repo and live now byte-identical on all functional lines. Preconditions verified before endorsing it: /var/log/fail2ban.log present (root:root 0600, 34K), loglevel=INFO in fail2ban.conf (below WARNING recidive silently never counts bans), backend=polling+logpath since the journal lacks fail2ban's own log. fail2ban-client -t passes with recidive on
