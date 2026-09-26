@@ -45,3 +45,25 @@ hermes-agent 0.21.5-1 built via makepkg (126MB pkg.tar.zst) after swapping nodej
 ## 2026-09-26 11:51:48 · note
 
 machine was rebuilt after a lockout; prior session history lost. 120 repos intact via git remote. Prime lockout suspect: Great Vibes as global KDE UI font (calligraphy, size 14, no bold/italic) reaching lock screen + dialogs
+
+## 2026-09-26 11:57:30 · fix
+
+fonts: bumped Great Vibes 10/12/14 -> 16pt across all 6 locations (kdeglobals font/fixed, gtk-3.0, gtk-4.0, gtkrc-2.0, Garuda.profile, alacritty). Repo sources + install.sh updated so it survives re-install. Great Vibes has only a Regular weight; added fontconfig synthetic-embolden rule at ~/.config/fontconfig/conf.d/99-greatvibes-bold.conf
+
+## 2026-09-26 11:58:35 · fix
+
+opencode: voidlit.json was installed but NEVER ACTIVATED - opencode.jsonc had no "theme" key, so the black/red theme was inert since first install. Fixed by adding theme:voidlit to opencode.jsonc, installing to ~/.config/opencode/theme/ as well as themes/, and adding an activation step to install.sh (string-aware comment stripper so URLs in $schema survive). Tested against 5 config shapes.
+
+## 2026-09-26 11:58:35 · fix
+
+fonts: Great Vibes 10/12/14 -> 16pt across all 6 locations; repo sources + install.sh updated (commit a38327d). No true bold available - font ships Regular only.
+## 2026-09-26 12:55:27 · env
+
+```
+os        : Garuda Linux
+kernel    : 7.2.7-zen1-1-zen
+node      : v26.10.0
+python    : Python 3.14.7
+opencode  : 1.18.32-1
+hermes    : 0.21.5-1
+```
