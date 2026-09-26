@@ -83,3 +83,7 @@ git identity was only set in nyan-gfsf-alert; zen-hardening/hermes-blood/buildlo
 ## 2026-09-26 13:36:03 · fix
 
 BDE hardlock was NOT installed, deliberately. Audit found install-hardlock.sh appended 'auth required pam_deny.so' to /etc/pam.d for login+sudo+gdm-password+sshd+su, and bde-auth exited non-zero on any exception, so a down daemon or missing socket = locked out of login/sudo/sshd. Fixed to fail open (bde-auth 359cc45): exit 2 = unavailable vs exit 1 = denied, BDE_FAILMODE defaults open, socket resolved via pwd not getuid (PAM runs as root), pam_deny.so removed, sshd opt-in, installer gains --dry-run + backups. NOT INSTALLED - needs sudo
+
+## 2026-09-26 13:36:03 · ok
+
+notifications already in place: shield-kitty-watch.service enabled+active, notify-send, no fullscreen takeover
