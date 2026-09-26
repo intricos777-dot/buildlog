@@ -135,3 +135,7 @@ arpwatch-spoof.service exited 1 in a restart loop: I used original-LBL-arpwatch 
 ## 2026-09-26 14:17:54 · fix
 
 arpwatch-spoof STILL failed after the 3.9 rewrite: the culprit was -q. arpwatch(8) lists -q in the synopsis [-CdFNpqsvzZ] and describes it in OPTIONS, but the 3.9 binary rejects it and prints usage, exit 1. Tested every synopsis letter: -C -d -F -N -p -s -v -z -Z all accepted, -q is the sole exception, so the man page is wrong. arpwatch prints usage BEFORE opening the raw socket, so bad flags are detectable unprivileged -- added a parse-check to the installer reading ARPWATCH_ARGS shared with the unit, so it cannot drift again. commit fc71393
+
+## 2026-09-26 14:22:15 · fix
+
+install-arpwatch-spoof.sh appeared frozen on 'already installed'. Cause: my new parse-check ran 'arpwatch ARGS' in the foreground; under sudo that succeeds, opens the raw socket and NEVER RETURNS (-F is what keeps it foreground). The check had only ever been tested unprivileged, where arpwatch fails on the socket and exits at once -- the single case that returns. Fixed with 'timeout 3', treating exit 124 as success ('still running' == flags parsed); the real signal is absence of a usage message, valid under both root and unprivileged. Probe now uses a temp datafile. All 3 paths tested. commit 54050ec
