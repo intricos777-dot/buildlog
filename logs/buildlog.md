@@ -115,3 +115,7 @@ THREE REAL GAPS found auditing 'ban remote access for 1 day': (1) ignoreip inclu
 ## 2026-09-26 13:53:39 · note
 
 repo updated to match live: shield-kitty-fail2ban.local recidive enabled=true (c897508), confirmed deliberate by user, not drift. Repo and live now byte-identical on all functional lines. Preconditions verified before endorsing it: /var/log/fail2ban.log present (root:root 0600, 34K), loglevel=INFO in fail2ban.conf (below WARNING recidive silently never counts bans), backend=polling+logpath since the journal lacks fail2ban's own log. fail2ban-client -t passes with recidive on
+
+## 2026-09-26 13:59:40 · ok
+
+built ARP spoof detection (arpwatch 3.9-1 from extra, was entirely absent): arpwatch-spoof-alert.sh exec hook + arpwatch-spoof.service + install-arpwatch-spoof.sh, commit 3a65f5e. Alerts ONLY on flip-flop (one IP, two MACs); new hosts logged not alerted. NO auto-ban by design -- MAC randomisation makes flip-flops routine on a /8 with 16.7M other addresses, so a 24h ban would cut off colleagues; the 1-day ban stays with fail2ban where it keys on real auth attempts. 7/7 classification tests pass + live notify-send delivery verified. NOT INSTALLED, needs root
