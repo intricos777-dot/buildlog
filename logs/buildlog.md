@@ -127,3 +127,7 @@ corrected an earlier claim of mine: kdeconnectd is NOT LAN-exposed. systemctl sa
 ## 2026-09-26 14:02:04 · fix
 
 arpwatch installer aborted under sudo: 'hook not executable: /root/Projects/...'. sudo resets HOME to /root, so $HOME/Projects resolved into /root. Fixed by resolving the real home from SUDO_USER via getent and rewriting the unit path + Environment=HOME at install time. Also found a SECOND silent bug the same way: the hook is arpwatch's child, and arpwatch starts as root then drops privs with -u, which changes uid but NOT the environment -- so the hook had no DISPLAY/DBUS and every spoof notification failed while the log line still appeared. Fixed by reconstructing the session from /run/user/UID/bus. Verified: notify-send with only the bootstrapped vars exits 0, bare env fails 'Cannot autolaunch D-Bus'. commit b39490a
+
+## 2026-09-26 14:15:15 · fix
+
+arpwatch-spoof.service exited 1 in a restart loop: I used original-LBL-arpwatch flags, but the extra-repo 3.9 build has NO -a exec hook, no -u, no -c, and wants -i INTERFACE not positional. Rewrote detection to poll the datafile via arpwatch-spoof-scan.sh on a 2min timer, unit now uses -F -i wlo1 -f arp.dat -s -q -N -z (-N matters, this is a /8 so most traffic looks like a bogon). Found+fixed 3 bugs: comma-based MAC counting false-alarmed on same MAC with different case; stale state file swallowed a returning spoof; installer/scanner/unit disagreed on the datafile name. 12/12 tests pass incl. dedup lifecycle and 5000-row scale. commit 7dc7a07
