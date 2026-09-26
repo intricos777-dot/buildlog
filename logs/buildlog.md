@@ -107,3 +107,7 @@ pam_faillock facts confirmed from local man pages: (1) unlock_time=0 means NEVER
 ## 2026-09-26 13:50:14 · note
 
 SYSTEM SPOOFING IS ENTIRELY UNCOVERED: no arpwatch, no suricata, no zeek, no tcpdump, no tpm2-tools installed, and zero spoofing logic in any repo. fail2ban structurally CANNOT do this -- it parses auth logs for repeated failures and has no notion of ARP/DHCP/hostname/MAC spoofing or rogue-device impersonation. This needs different tooling, and installing it needs root
+
+## 2026-09-26 13:50:18 · note
+
+THREE REAL GAPS found auditing 'ban remote access for 1 day': (1) ignoreip includes 10.0.0.0/8 and this machine IS 10.197.250.246/8, so 16,777,216 addresses on the local network are permanently EXEMPT from banning -- fail2ban cannot ban 'another system' on this network at all. (2) sshd jail is INERT: sshd inactive, nothing listens on 22. (3) kdeconnectd is LAN-exposed on *:1716 tcp+udp with NO jail -- the only real remote surface, unmonitored
