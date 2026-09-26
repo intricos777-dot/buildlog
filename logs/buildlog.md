@@ -67,3 +67,7 @@ python    : Python 3.14.7
 opencode  : 1.18.32-1
 hermes    : 0.21.5-1
 ```
+
+## 2026-09-26 13:03:00 · fix
+
+install.sh: was applying Great Vibes as global KDE UI font on every re-install. buildlog:47 records a lockout with that as prime suspect (calligraphy, Regular-only weight, reaching lock screen + dialogs). Font is now opt-in via BLOOD_GLOBAL_FONT=1; icon theme still applies. Live kdeglobals font/fixed restored to Fira Sans, matching the menuFont/toolBarFont the rest of the file already used. hermes-blood 84b2707
