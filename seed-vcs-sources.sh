@@ -1,5 +1,8 @@
 #!/bin/bash
 # Watermark: Living_Sin (intricos777-dot) + AI agents (Hermes, Lia, opencode) - collaborative work
+# Copyright (c) 2026 Living Sin (intricos777-dot) + AI agents (Hermes, Lia, opencode) - collaborative work
+# Licensed under Living Sin Proprietary License (LSPL-1.0)
+# See LICENSE file for details.
 # seed-vcs-sources.sh — pre-seed makepkg's VCS sources as shallow mirrors.
 #
 # Why: makepkg's download_git() runs `git clone --origin=origin --mirror` for
